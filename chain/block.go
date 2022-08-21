@@ -21,8 +21,10 @@ import (
 	I decided then track blocks and heights at 2 levels. First with a hash map from height -> blocks, where blocks is another
 	hash map of blocks -> occurrences
 
-	This allows us to implement a process to remove entire blocks from `blockTracker` if they cannot be accepted anymore
+	This allows us to have a (not implemented in this version) process to remove entire blocks from `blockTracker`
+	if they cannot be accepted anymore
 	for being below `maxHeight` (assumed different blocks cannot share the same height and IDs are unique).
+
 */
 
 const minAcceptedBlockCount = 3
@@ -55,6 +57,9 @@ func (p *BlockProcessor) ProcessBlocks(startHeight uint64, blocks []string) uint
 	blockHeight := startHeight
 	for _, block := range blocks {
 
+		if block == "" {
+			continue
+		}
 		// Here I try optimistic improvement that skips heights that are less or equal to p.maxHeight
 		// This is more to show that further optiization  might be possible given the behaviour of the system in real world
 		// In reality in a high concurrency environment this might not have any benefit, atomic calls can be expensive

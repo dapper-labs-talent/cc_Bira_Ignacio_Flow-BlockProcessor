@@ -98,9 +98,9 @@ func TestBlocksAcceptedAsHeightIncreasesWhileProcessing(t *testing.T) {
 	// block 'c' will have height 2 and will be accepted because 'a' was accepted with 1
 	processor := NewBlockProcessor()
 	blocks := []string{"a", "b", "c"}
-	height = processor.ProcessBlocks(height, blocks)
-	height = processor.ProcessBlocks(height, blocks)
-	height = processor.ProcessBlocks(height, blocks)
+	processor.ProcessBlocks(1, blocks)
+	processor.ProcessBlocks(1, blocks)
+	height = processor.ProcessBlocks(1, blocks)
 
 	assert.Equal(t, expectedHeight, height)
 }
@@ -192,7 +192,7 @@ func TestConcurrentSingleBlockAccepted(t *testing.T) {
 func TestConcurrentBlocksAcceptedAsHeightIncreasesWhileProcessing(t *testing.T) {
 	const (
 		concurrencyLevel        = 4
-		expectedHeight   uint64 = 2
+		expectedHeight   uint64 = 3
 	)
 	processor := NewBlockProcessor()
 
