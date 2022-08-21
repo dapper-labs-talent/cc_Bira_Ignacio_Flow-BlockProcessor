@@ -17,8 +17,3 @@ func (p *BlockProcessor) ProcessBlocks(startHeight uint64, blocks []string) uint
 
 	return 0
 }
-
-// MaxAcceptedHeight returns the last maximum accepted height
-func (p *BlockProcessor) MaxAcceptedHeight() uint64 {
-	return 0
-}
