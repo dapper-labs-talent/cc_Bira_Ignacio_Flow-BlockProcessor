@@ -17,7 +17,7 @@ type testBlockList []string
 func TestProcessorStartsWithacceptedGenesisBlock(t *testing.T) {
 	processor := NewBlockProcessor()
 
-	assert.EqualValues(t, 0, processor.ProcessBlocks(0, []string{}))
+	assert.EqualValues(t, 0, processor.ProcessBlocks(1, []string{}))
 }
 
 func TestEmptyBlocksKeepHeight(t *testing.T) {
@@ -90,8 +90,8 @@ func TestBlockSameIdDifferentHeightNotAccepted(t *testing.T) {
 }
 
 func TestBlocksAcceptedAsHeightIncreasesWhileProcessing(t *testing.T) {
-	const expectedHeight uint64 = 2
-	var height uint64 = 0
+	const expectedHeight uint64 = 3
+	var height uint64 = 1
 
 	// block 'a' will be accepted and even though 'b' has the same height 3 times
 	// its height will be same as max height and not accepted.
@@ -108,9 +108,9 @@ func TestBlocksAcceptedAsHeightIncreasesWhileProcessing(t *testing.T) {
 // Test with a little more elaborate setup
 func TestBlockIdSamePositionDifferentStartHeightNotAccepted(t *testing.T) {
 	processor := NewBlockProcessor()
-	processor.ProcessBlocks(0, []string{"a"})
 	processor.ProcessBlocks(1, []string{"a"})
-	height := processor.ProcessBlocks(0, []string{"a"})
+	processor.ProcessBlocks(2, []string{"a"})
+	height := processor.ProcessBlocks(1, []string{"a"})
 
 	assert.EqualValues(t, 0, height)
 }
@@ -118,34 +118,34 @@ func TestBlockIdSamePositionDifferentStartHeightNotAccepted(t *testing.T) {
 func TestBlockNotAcceptedIfPreviousHeightNotAccepted(t *testing.T) {
 	// BlockProcess only knows about the genesis block at this point
 	processor := NewBlockProcessor()
-	processor.ProcessBlocks(1, []string{"a"})
-	processor.ProcessBlocks(1, []string{"a"})
-	height := processor.ProcessBlocks(1, []string{"a"})
+	processor.ProcessBlocks(2, []string{"a"})
+	processor.ProcessBlocks(2, []string{"a"})
+	height := processor.ProcessBlocks(2, []string{"a"})
 
 	assert.EqualValues(t, 0, height)
 }
 
 func TestTwoBlocksNotAcceptedForSameHeight(t *testing.T) {
-	var height uint64 = 0
+	var height uint64 = 1
 	processor := NewBlockProcessor()
 
 	// accepted one block
-	processor.ProcessBlocks(0, []string{"a"})
-	processor.ProcessBlocks(0, []string{"a"})
-	height = processor.ProcessBlocks(0, []string{"a"})
+	processor.ProcessBlocks(1, []string{"a"})
+	processor.ProcessBlocks(1, []string{"a"})
+	height = processor.ProcessBlocks(1, []string{"a"})
 	assert.EqualValues(t, 1, height)
 
 	// and lets accept another
-	processor.ProcessBlocks(1, []string{"b"})
-	processor.ProcessBlocks(1, []string{"b"})
-	height = processor.ProcessBlocks(1, []string{"b"})
+	processor.ProcessBlocks(2, []string{"b"})
+	processor.ProcessBlocks(2, []string{"b"})
+	height = processor.ProcessBlocks(2, []string{"b"})
 	assert.EqualValues(t, 2, height)
 
 	// but if we try again with other blocks, such that any valid height would have been previously recorded,
 	// the blocks is not be accepted
-	processor.ProcessBlocks(0, []string{"c", "d"})
-	processor.ProcessBlocks(0, []string{"c", "d"})
-	height = processor.ProcessBlocks(0, []string{"c", "d"})
+	processor.ProcessBlocks(1, []string{"c", "d"})
+	processor.ProcessBlocks(1, []string{"c", "d"})
+	height = processor.ProcessBlocks(1, []string{"c", "d"})
 	assert.EqualValues(t, 2, height)
 }
 
@@ -155,11 +155,11 @@ func TestAcceptBlockWithDifferentStartHeightInDifferentCalls(t *testing.T) {
 	processor := NewBlockProcessor()
 
 	// accepted 'a' block with height 1 and setup block 'b' to be accepted later
-	processor.ProcessBlocks(0, []string{"a", "b"})
-	processor.ProcessBlocks(0, []string{"a", "b"})
-	height = processor.ProcessBlocks(0, []string{"a", "-", "b"})
+	processor.ProcessBlocks(1, []string{"a", "b"})
+	processor.ProcessBlocks(1, []string{"a", "b"})
+	height = processor.ProcessBlocks(1, []string{"a", "-", "b"})
 
-	height = processor.ProcessBlocks(height, []string{"b"})
+	height = processor.ProcessBlocks(2, []string{"b"})
 	assert.EqualValues(t, 2, height)
 }
 
@@ -177,7 +177,7 @@ func TestConcurrentSingleBlockAccepted(t *testing.T) {
 
 	for i := 0; i < concurrencyLevel; i++ {
 		go func() {
-			processor.ProcessBlocks(0, blocks)
+			processor.ProcessBlocks(1, blocks)
 			wg.Done()
 		}()
 	}
@@ -185,7 +185,7 @@ func TestConcurrentSingleBlockAccepted(t *testing.T) {
 	wg.Wait()
 
 	// same trick to get max height
-	height := processor.ProcessBlocks(0, []string{})
+	height := processor.ProcessBlocks(1, []string{})
 	assert.Equal(t, expectedHeight, height)
 }
 
@@ -203,7 +203,7 @@ func TestConcurrentBlocksAcceptedAsHeightIncreasesWhileProcessing(t *testing.T) 
 	// accept 2 blocks out of 3 concurrently
 	for i := 0; i < concurrencyLevel; i++ {
 		go func() {
-			processor.ProcessBlocks(0, blocks)
+			processor.ProcessBlocks(1, blocks)
 			wg.Done()
 		}()
 	}
@@ -211,7 +211,7 @@ func TestConcurrentBlocksAcceptedAsHeightIncreasesWhileProcessing(t *testing.T) 
 	wg.Wait()
 	// after processing is done, 2 blocks should have been accepted at height 1 and 2
 	// same trick to get max height
-	height := processor.ProcessBlocks(0, []string{})
+	height := processor.ProcessBlocks(1, []string{})
 
 	assert.EqualValues(t, expectedHeight, height)
 }
@@ -226,7 +226,7 @@ func processTestBlocks(t *testing.T, blocksList ...testBlockList) uint64 {
 	processor := NewBlockProcessor()
 
 	for _, blocks := range blocksList {
-		height = processor.ProcessBlocks(0, blocks)
+		height = processor.ProcessBlocks(1, blocks)
 	}
 
 	return height
